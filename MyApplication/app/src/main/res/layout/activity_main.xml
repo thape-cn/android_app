@@ -4,14 +4,40 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="60dp"
     tools:context=".MainActivity">
 
-    <Switch
-        android:id="@+id/switch1"
+
+    <EditText
+        android:id="@+id/phone"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="监听短信"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        android:layout_height="60dp"
+        android:autofillHints="phone"
+        android:ems="10"
+        android:hint="@string/phone_text"
+        android:inputType="phone"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="60dp" />
+
+    <EditText
+        android:id="@+id/serverUrl"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="100dp"
+        android:autofillHints="url"
+        android:ems="10"
+        android:hint="@string/server_url_text"
+        android:inputType="textUri"
+        app:layout_constraintTop_toBottomOf="@+id/phone"
+        tools:layout_editor_absoluteX="60dp" />
+
+    <Switch
+        android:id="@+id/listenOnOff"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="100dp"
+        android:text="@string/listen_text"
+        app:layout_constraintTop_toBottomOf="@+id/serverUrl"
+        tools:layout_editor_absoluteX="60dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
