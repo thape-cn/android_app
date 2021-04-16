@@ -23,7 +23,7 @@
         android:id="@+id/serverUrl"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="30dp"
         android:autofillHints="url"
         android:ems="10"
         android:hint="@string/server_url_text"
@@ -35,9 +35,22 @@
         android:id="@+id/listenOnOff"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="30dp"
         android:text="@string/listen_text"
         app:layout_constraintTop_toBottomOf="@+id/serverUrl"
         tools:layout_editor_absoluteX="60dp" />
+
+    <TextView
+        android:id="@+id/notes"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="60dp"
+        android:ellipsize="start"
+        android:singleLine="false"
+        android:text="@string/notes"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@+id/listenOnOff"
+        app:lineHeight="24dp"
+        tools:layout_editor_absoluteX="117dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,31 +23,34 @@ import org.json.JSONObject;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends AppCompatActivity{
-
-    private EditText phone;
-    private EditText serverUrl;
-    private Switch listenOnOff;
-    private IntentFilter intentFilter;
     private BroadcastReceiver messageReceiver;
 
-    private MyReceiver myReceiver;
-
-    public String value = null;
-    public String message;
 
     private MySocketThread myThread;
 
-    private class MySocketThread extends Thread{
+    private static class MySocketThread extends Thread{
+
+        private String url = null;
+        private String receiveId = null;
+        private String content = null;
 
 //        private Socket socket;
         private HttpURLConnection connection;
+
+        public MySocketThread(String url, String receiveId, String content) {
+            this.url = url;
+            this.receiveId = receiveId;
+            this.content = content;
+        }
 
         @Override
         public void run(){
@@ -58,8 +62,7 @@ public class MainActivity extends AppCompatActivity{
 //                bw.write(value);
 //                bw.flush();
 //                this.socket.close();
-                String myPhone = phone.getText().toString();
-                URL url = new URL(serverUrl.getText().toString());
+                URL url = new URL(this.url);
                 this.connection = (HttpURLConnection) url.openConnection();
                 //设置请求方法
                 this.connection.setRequestMethod("POST");
@@ -69,27 +72,19 @@ public class MainActivity extends AppCompatActivity{
                 this.connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
                 this.connection.connect();
                 OutputStream os = this.connection.getOutputStream();
-                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, "utf-8"));
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
                 JSONObject body = new JSONObject();
-                body.put("receiveId", myPhone);
-                body.put("content", value);
+                body.put("receiveId", this.receiveId);
+                body.put("content", this.content);
                 bw.write(body.toString());
                 bw.close();
                 int responseCode = this.connection.getResponseCode();
-                Log.d("kwwl", String.valueOf(responseCode));
-                if(responseCode == HttpURLConnection.HTTP_OK){
-//                    InputStream inputStream = connection.getInputStream();
+//                if(responseCode == HttpURLConnection.HTTP_OK){
+                    InputStream inputStream = this.connection.getInputStream();
 //                    String result = is2String(inputStream);//将流转换为字符串。
-//                    Log.d("kwwl","result============="+result);
-                }
-            }
-            catch (UnknownHostException e){
-                e.printStackTrace();
-            }
-            catch (IOException e){
-                e.printStackTrace();
-            }
-            catch (JSONException e){
+                    Log.d("karl","result=============" + inputStream.toString());
+//                }
+            } catch (IOException | JSONException e){
                 e.printStackTrace();
             } finally {
 //                this.socket.close();
@@ -100,17 +95,24 @@ public class MainActivity extends AppCompatActivity{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final SharedPreferences sharedPreferences = this.getSharedPreferences("settings", Context.MODE_PRIVATE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        phone = (EditText) findViewById(R.id.phone);
-        serverUrl = (EditText) findViewById(R.id.serverUrl);
-        listenOnOff = (Switch) findViewById(R.id.listenOnOff);
+        final EditText phone = (EditText) findViewById(R.id.phone);
+        final EditText serverUrl = (EditText) findViewById(R.id.serverUrl);
+        phone.setText(sharedPreferences.getString("phone", ""));
+        serverUrl.setText(sharedPreferences.getString("serverUrl", ""));
+        Switch listenOnOff = (Switch) findViewById(R.id.listenOnOff);
         listenOnOff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked == true) {
+                if (isChecked) {
                     phone.setFocusable(false);
                     serverUrl.setFocusable(false);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("phone", phone.getText().toString());
+                    editor.putString("serverUrl", serverUrl.getText().toString());
+                    editor.apply();
                     //Toast.makeText(MainActivity.this, "applying permission", Toast.LENGTH_LONG).show();
 
                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
@@ -120,36 +122,31 @@ public class MainActivity extends AppCompatActivity{
                             //Toast.makeText(MainActivity.this, "Permission must be granted to get sms", Toast.LENGTH_LONG).show();
                             ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_SMS}, 1);
                         }
-                    } else {
-                        //Toast.makeText(MainActivity.this, "permission granted", Toast.LENGTH_LONG).show();
-                        //intentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
-                        //myReceiver = new MyReceiver();
-                        //registerReceiver(myReceiver, intentFilter);
-                        messageReceiver = new BroadcastReceiver() {
-                            @Override
-                            public void onReceive(Context context, Intent intent) {
-                                Bundle bundle = intent.getExtras();
-                                value = bundle.getString("name");
-                                //Toast.makeText(context, value, Toast.LENGTH_LONG).show();
-                                //Intent intentTmp = new Intent(MainActivity.this, SocketActivity.class);
-                                //intentTmp.putExtra("extra_data", value);
-                                //startActivity(intentTmp);
-                                myThread = new MySocketThread();
-                                myThread.start();
-                            }
-                        };
-                        registerReceiver(messageReceiver, new IntentFilter("CLOSE_ACTION"));
-
                     }
-                    Toast.makeText(MainActivity.this, "I'm here", Toast.LENGTH_LONG).show();
-                    if (value != null) {
-
-                    }
+                    messageReceiver = new BroadcastReceiver() {
+                        @Override
+                        public void onReceive(Context context, Intent intent) {
+                            String url = sharedPreferences.getString("serverUrl", "");
+                            String receiveId = sharedPreferences.getString("phone", "");
+                            Bundle bundle = intent.getExtras();
+                            String value = bundle.getString("name");
+                            //Toast.makeText(context, value, Toast.LENGTH_LONG).show();
+                            //Intent intentTmp = new Intent(MainActivity.this, SocketActivity.class);
+                            //intentTmp.putExtra("extra_data", value);
+                            //startActivity(intentTmp);
+                            myThread = new MySocketThread(url, receiveId, value);
+                            myThread.start();
+                        }
+                    };
+                    registerReceiver(messageReceiver, new IntentFilter("CLOSE_ACTION"));
+                    Toast.makeText(MainActivity.this, "功能开启", Toast.LENGTH_LONG).show();
                 }
                 else{
+                    unregisterReceiver(messageReceiver);
                     //Do something
                     phone.setFocusableInTouchMode(true);
                     serverUrl.setFocusableInTouchMode(true);
+                    Toast.makeText(MainActivity.this, "功能关闭", Toast.LENGTH_LONG).show();
                 }
             }
         });
