@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -98,8 +99,10 @@ public class MainActivity extends AppCompatActivity{
         final SharedPreferences sharedPreferences = this.getSharedPreferences("settings", Context.MODE_PRIVATE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        final EditText matchKeys = (EditText) findViewById(R.id.matchKeys);
         final EditText phone = (EditText) findViewById(R.id.phone);
         final EditText serverUrl = (EditText) findViewById(R.id.serverUrl);
+        matchKeys.setText(sharedPreferences.getString("matchKeys", ""));
         phone.setText(sharedPreferences.getString("phone", ""));
         serverUrl.setText(sharedPreferences.getString("serverUrl", ""));
         Switch listenOnOff = (Switch) findViewById(R.id.listenOnOff);
@@ -107,9 +110,11 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
+                    matchKeys.setFocusable(false);
                     phone.setFocusable(false);
                     serverUrl.setFocusable(false);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("matchKeys", matchKeys.getText().toString());
                     editor.putString("phone", phone.getText().toString());
                     editor.putString("serverUrl", serverUrl.getText().toString());
                     editor.apply();
@@ -126,16 +131,30 @@ public class MainActivity extends AppCompatActivity{
                     messageReceiver = new BroadcastReceiver() {
                         @Override
                         public void onReceive(Context context, Intent intent) {
+                            String keys = sharedPreferences.getString("matchKeys", "");
                             String url = sharedPreferences.getString("serverUrl", "");
                             String receiveId = sharedPreferences.getString("phone", "");
                             Bundle bundle = intent.getExtras();
                             String value = bundle.getString("name");
+                            boolean flag = keys.equals("");
+                            if (!flag) {
+                                String[] temp = keys.split(",");
+                                for (int i = 0; i < temp.length; i++) {
+                                    flag = value.contains(temp[i]);
+                                    if (flag) {
+                                        break;
+                                    }
+                                }
+                            }
                             //Toast.makeText(context, value, Toast.LENGTH_LONG).show();
                             //Intent intentTmp = new Intent(MainActivity.this, SocketActivity.class);
                             //intentTmp.putExtra("extra_data", value);
                             //startActivity(intentTmp);
-                            myThread = new MySocketThread(url, receiveId, value);
-                            myThread.start();
+                            Log.d("flag", String.valueOf(flag));
+                            if (flag) {
+                                myThread = new MySocketThread(url, receiveId, value);
+                                myThread.start();
+                            }
                         }
                     };
                     registerReceiver(messageReceiver, new IntentFilter("CLOSE_ACTION"));
@@ -144,6 +163,7 @@ public class MainActivity extends AppCompatActivity{
                 else{
                     unregisterReceiver(messageReceiver);
                     //Do something
+                    matchKeys.setFocusableInTouchMode(true);
                     phone.setFocusableInTouchMode(true);
                     serverUrl.setFocusableInTouchMode(true);
                     Toast.makeText(MainActivity.this, "功能关闭", Toast.LENGTH_LONG).show();

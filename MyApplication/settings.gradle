@@ -1,2 +1,2 @@
 include ':app'
-rootProject.name='短信分发'
+rootProject.name='天华联审平台验证码转发助手'

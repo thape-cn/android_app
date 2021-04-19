@@ -9,14 +9,26 @@
 
 
     <EditText
+        android:id="@+id/matchKeys"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:ems="10"
+        android:hint="@string/match_keys"
+        android:inputType="text"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="60dp"
+        android:autofillHints="keys" />
+
+    <EditText
         android:id="@+id/phone"
         android:layout_width="match_parent"
         android:layout_height="60dp"
+        android:layout_marginTop="30dp"
         android:autofillHints="phone"
         android:ems="10"
         android:hint="@string/phone_text"
         android:inputType="phone"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/matchKeys"
         tools:layout_editor_absoluteX="60dp" />
 
     <EditText
@@ -44,13 +56,13 @@
         android:id="@+id/notes"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="30dp"
         android:ellipsize="start"
         android:singleLine="false"
         android:text="@string/notes"
         android:textSize="14sp"
         app:layout_constraintTop_toBottomOf="@+id/listenOnOff"
-        app:lineHeight="24dp"
+        app:lineHeight="18dp"
         tools:layout_editor_absoluteX="117dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
