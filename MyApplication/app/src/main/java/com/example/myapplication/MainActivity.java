@@ -12,7 +12,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -29,32 +28,33 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver messageReceiver;
 
 
     private MySocketThread myThread;
 
-    private static class MySocketThread extends Thread{
+    private static class MySocketThread extends Thread {
 
         private String url = null;
         private String receiveId = null;
+        private String sendId = null;
         private String content = null;
 
-//        private Socket socket;
+        // private Socket socket;
         private HttpURLConnection connection;
 
-        public MySocketThread(String url, String receiveId, String content) {
+        public MySocketThread(String url, String receiveId, String sendId, String content) {
             this.url = url;
             this.receiveId = receiveId;
+            this.sendId = sendId;
             this.content = content;
         }
 
         @Override
-        public void run(){
+        public void run() {
             try {
 //                this.socket = new Socket("127.0.0.1", 10000);       //change to you own server IP address
 //                this.socket.setSoTimeout(10000);
@@ -76,16 +76,18 @@ public class MainActivity extends AppCompatActivity{
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
                 JSONObject body = new JSONObject();
                 body.put("receiveId", this.receiveId);
+                body.put("sendId", this.sendId);
                 body.put("content", this.content);
                 bw.write(body.toString());
                 bw.close();
                 int responseCode = this.connection.getResponseCode();
+                Log.d("code", "result===" + String.valueOf(responseCode));
 //                if(responseCode == HttpURLConnection.HTTP_OK){
-                    InputStream inputStream = this.connection.getInputStream();
+                InputStream inputStream = this.connection.getInputStream();
 //                    String result = is2String(inputStream);//将流转换为字符串。
-                    Log.d("karl","result=============" + inputStream.toString());
+//                Log.d("karl", "result=============" + inputStream.toString());
 //                }
-            } catch (IOException | JSONException e){
+            } catch (IOException | JSONException e) {
                 e.printStackTrace();
             } finally {
 //                this.socket.close();
@@ -101,9 +103,11 @@ public class MainActivity extends AppCompatActivity{
         setContentView(R.layout.activity_main);
         final EditText matchKeys = (EditText) findViewById(R.id.matchKeys);
         final EditText phone = (EditText) findViewById(R.id.phone);
+        final EditText subPhone = (EditText) findViewById(R.id.subPhone);
         final EditText serverUrl = (EditText) findViewById(R.id.serverUrl);
         matchKeys.setText(sharedPreferences.getString("matchKeys", ""));
         phone.setText(sharedPreferences.getString("phone", ""));
+        subPhone.setText(sharedPreferences.getString("subPhone", ""));
         serverUrl.setText(sharedPreferences.getString("serverUrl", ""));
         Switch listenOnOff = (Switch) findViewById(R.id.listenOnOff);
         listenOnOff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -112,10 +116,12 @@ public class MainActivity extends AppCompatActivity{
                 if (isChecked) {
                     matchKeys.setFocusable(false);
                     phone.setFocusable(false);
+                    subPhone.setFocusable(false);
                     serverUrl.setFocusable(false);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString("matchKeys", matchKeys.getText().toString());
                     editor.putString("phone", phone.getText().toString());
+                    editor.putString("subPhone", subPhone.getText().toString());
                     editor.putString("serverUrl", serverUrl.getText().toString());
                     editor.apply();
                     //Toast.makeText(MainActivity.this, "applying permission", Toast.LENGTH_LONG).show();
@@ -133,17 +139,18 @@ public class MainActivity extends AppCompatActivity{
                         public void onReceive(Context context, Intent intent) {
                             String keys = sharedPreferences.getString("matchKeys", "");
                             String url = sharedPreferences.getString("serverUrl", "");
-                            String receiveId = sharedPreferences.getString("phone", "");
                             Bundle bundle = intent.getExtras();
-                            String value = bundle.getString("name");
+                            String sendId = bundle.getString("sendId");
+                            String content = bundle.getString("content");
+                            int slotId = bundle.getInt("slotId");
+                            String receiveKey = slotId == 0 ? "phone" : "subPhone";
+                            String receiveId = sharedPreferences.getString(receiveKey, "");
                             boolean flag = keys.equals("");
                             if (!flag) {
                                 String[] temp = keys.split(",");
-                                for (int i = 0; i < temp.length; i++) {
-                                    flag = value.contains(temp[i]);
-                                    if (flag) {
-                                        break;
-                                    }
+                                for (String s : temp) {
+                                    flag = content.contains(s);
+                                    if (flag) break;
                                 }
                             }
                             //Toast.makeText(context, value, Toast.LENGTH_LONG).show();
@@ -152,19 +159,19 @@ public class MainActivity extends AppCompatActivity{
                             //startActivity(intentTmp);
                             Log.d("flag", String.valueOf(flag));
                             if (flag) {
-                                myThread = new MySocketThread(url, receiveId, value);
+                                myThread = new MySocketThread(url, receiveId, sendId, content);
                                 myThread.start();
                             }
                         }
                     };
                     registerReceiver(messageReceiver, new IntentFilter("CLOSE_ACTION"));
                     Toast.makeText(MainActivity.this, "功能开启", Toast.LENGTH_LONG).show();
-                }
-                else{
+                } else {
                     unregisterReceiver(messageReceiver);
                     //Do something
                     matchKeys.setFocusableInTouchMode(true);
                     phone.setFocusableInTouchMode(true);
+                    subPhone.setFocusableInTouchMode(true);
                     serverUrl.setFocusableInTouchMode(true);
                     Toast.makeText(MainActivity.this, "功能关闭", Toast.LENGTH_LONG).show();
                 }

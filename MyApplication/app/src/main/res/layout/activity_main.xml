@@ -4,26 +4,29 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="60dp"
+    android:paddingLeft="20dp"
+    android:paddingTop="20dp"
+    android:paddingRight="20dp"
+    android:paddingBottom="20dp"
     tools:context=".MainActivity">
 
 
     <EditText
         android:id="@+id/matchKeys"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="0dp"
+        android:autofillHints="keys"
         android:ems="10"
         android:hint="@string/match_keys"
         android:inputType="text"
         app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="60dp"
-        android:autofillHints="keys" />
+        tools:layout_editor_absoluteX="60dp" />
 
     <EditText
         android:id="@+id/phone"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:autofillHints="phone"
         android:ems="10"
         android:hint="@string/phone_text"
@@ -32,22 +35,34 @@
         tools:layout_editor_absoluteX="60dp" />
 
     <EditText
+        android:id="@+id/subPhone"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="20dp"
+        android:autofillHints="phone"
+        android:ems="10"
+        android:hint="@string/subPhone_text"
+        android:inputType="phone"
+        app:layout_constraintTop_toBottomOf="@+id/phone"
+        tools:layout_editor_absoluteY="60dp" />
+
+    <EditText
         android:id="@+id/serverUrl"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:autofillHints="url"
         android:ems="10"
         android:hint="@string/server_url_text"
         android:inputType="textUri"
-        app:layout_constraintTop_toBottomOf="@+id/phone"
+        app:layout_constraintTop_toBottomOf="@+id/subPhone"
         tools:layout_editor_absoluteX="60dp" />
 
     <Switch
         android:id="@+id/listenOnOff"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:text="@string/listen_text"
         app:layout_constraintTop_toBottomOf="@+id/serverUrl"
         tools:layout_editor_absoluteX="60dp" />
@@ -56,7 +71,7 @@
         android:id="@+id/notes"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:ellipsize="start"
         android:singleLine="false"
         android:text="@string/notes"

@@ -6,6 +6,7 @@ import android.content.Intent;
 
 import android.os.Bundle;
 import android.telephony.SmsMessage;
+
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -16,26 +17,30 @@ import static android.app.Activity.RESULT_OK;
 
 public class MyReceiver extends BroadcastReceiver {
     private static final String SMS_RECEIVED_ACTION = "android.provider.Telephony.SMS_RECEIVED";
+
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         //判断广播消息
-        if (action.equals(SMS_RECEIVED_ACTION)){
+        if (action.equals(SMS_RECEIVED_ACTION)) {
             Bundle bundle = intent.getExtras();
             //如果不为空
-            if (bundle!=null){
+            if (bundle != null) {
                 //将pdus里面的内容转化成Object[]数组
-                Object pdusData[] = (Object[]) bundle.get("pdus");// pdus ：protocol data unit  ：
+                Object[] pdusData = (Object[]) bundle.get("pdus"); // pdus ：protocol data unit  ：
+                int subId = bundle.getInt("subscription");
+                int slotId = SimUtil.getSlot(context, String.valueOf(subId));
+                String slotInfo = SimUtil.getSlotIdInfo(context, slotId);
                 //解析短信
                 SmsMessage[] msg = new SmsMessage[pdusData.length];
-                for (int i = 0;i < msg.length;i++){
-                    byte pdus[] = (byte[]) pdusData[i];
+                for (int i = 0; i < msg.length; i++) {
+                    byte[] pdus = (byte[]) pdusData[i];
                     msg[i] = SmsMessage.createFromPdu(pdus);
                 }
-                StringBuffer content = new StringBuffer();//获取短信内容
-                StringBuffer phoneNumber = new StringBuffer();//获取地址
+                StringBuilder content = new StringBuilder(); //获取短信内容
+                StringBuilder phoneNumber = new StringBuilder(); //获取地址
                 //分析短信具体参数
-                for (SmsMessage temp : msg){
+                for (SmsMessage temp : msg) {
                     content.append(temp.getMessageBody());
                     phoneNumber.append(temp.getOriginatingAddress());
                 }
@@ -43,18 +48,22 @@ public class MyReceiver extends BroadcastReceiver {
                 //Intent intent1 = new Intent(context, MainActivity.class);//
                 Intent i = new Intent("CLOSE_ACTION");
                 Bundle bundle1 = new Bundle();
-                bundle1.putString("name", phoneNumber.toString()+','+content.toString());
+                bundle1.putString("sendId", phoneNumber.toString());
+                bundle1.putString("content", content.toString());
+                bundle1.putInt("subId", subId);
+                bundle1.putInt("slotId", slotId);
+                bundle1.putString("slotInfo", slotInfo);
                 i.putExtras(bundle1);
                 context.sendBroadcast(i);
             }
         }
     }
 
-    public void sendToServer(String content){
+    public void sendToServer(String content) {
 
     }
 
-    public String smsToString(Context context, String sendid, String content){
+    public String smsToString(Context context, String sendid, String content) {
         String res = "";
         JSONObject object = new JSONObject();
         try {
@@ -65,8 +74,7 @@ public class MyReceiver extends BroadcastReceiver {
             jsonArray.put(jsonObject);
             object.put("sms", jsonArray);
             res = object.toString();
-        }
-        catch (JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
         }
         Toast.makeText(context, res, Toast.LENGTH_LONG).show();
