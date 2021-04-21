@@ -5,5 +5,5 @@
     <string name="subPhone_text">手机号（副卡）</string>
     <string name="server_url_text">转发地址</string>
     <string name="listen_text">监听短信</string>
-    <string name="notes">注意事项：\n1. 应用功能需要获取手机短信的权限，请确保开启了权限\n2. 部分手机短信权限分为普通短信和通知类短信，请确保全部允许\n操作说明：\n1. 设置多个关键词用英文“,”分割，为空时转发所有短信\n2. 输入主副卡手机号码 \n3. 输入接收短信的地址\n4. 打开监听短信开关</string>
+    <string name="notes">开启权限：\n1. 读取短信、通知类短信\n2. 获取手机信息权限\n操作说明：\n1. 设置多个关键词用英文“,”分割，为空时转发所有短信\n2. 输入主副卡手机号码 \n3. 输入接收短信的地址\n4. 打开监听短信开关</string>
 </resources>
