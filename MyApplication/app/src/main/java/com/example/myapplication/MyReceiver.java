@@ -30,7 +30,7 @@ public class MyReceiver extends BroadcastReceiver {
                 Object[] pdusData = (Object[]) bundle.get("pdus"); // pdus ：protocol data unit  ：
                 int subId = bundle.getInt("subscription");
                 int slotId = SimUtil.getSlot(context, String.valueOf(subId));
-                String slotInfo = SimUtil.getSlotIdInfo(context, slotId);
+                SlotInfo slotInfo = SimUtil.getSlotIdInfo(context, slotId);
                 //解析短信
                 SmsMessage[] msg = new SmsMessage[pdusData.length];
                 for (int i = 0; i < msg.length; i++) {
@@ -52,7 +52,8 @@ public class MyReceiver extends BroadcastReceiver {
                 bundle1.putString("content", content.toString());
                 bundle1.putInt("subId", subId);
                 bundle1.putInt("slotId", slotId);
-                bundle1.putString("slotInfo", slotInfo);
+                bundle1.putString("carrierName", slotInfo.carrierName);
+                bundle1.putString("receiveId", slotInfo.number);
                 i.putExtras(bundle1);
                 context.sendBroadcast(i);
             }

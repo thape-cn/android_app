@@ -19,6 +19,11 @@ class ModelSlotAndSub {
     String iccId = null;
 }
 
+class SlotInfo {
+    String carrierName = "";
+    String number = "";
+}
+
 public class SimUtil {
     //判断是否是双卡
     public static boolean isDoubleSim(Context mContext) {
@@ -31,8 +36,9 @@ public class SimUtil {
     }
 
     //通过卡槽id获取sim卡的信息0代码卡槽1，1代表卡槽2
-    public static String getSlotIdInfo(Context mContext, int slotId) {
+    public static SlotInfo getSlotIdInfo(Context mContext, int slotId) {
         String info = "";
+        SlotInfo slotInfo = new SlotInfo();
         SubscriptionManager manager = SubscriptionManager.from(mContext);
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -42,13 +48,14 @@ public class SimUtil {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            return "";
+            return slotInfo;
         }
         SubscriptionInfo subInfo = manager.getActiveSubscriptionInfoForSimSlotIndex(slotId);
         if (subInfo != null) {
-            info = subInfo.getCarrierName().toString();
+            slotInfo.carrierName = subInfo.getCarrierName().toString();
+            slotInfo.number = subInfo.getNumber().toString();
         }
-        return info;
+        return slotInfo;
     }
 
     //判断手机中是否装了双卡
@@ -90,14 +97,14 @@ public class SimUtil {
         int icc = 0;
         if (slotAndSubs != null && slotAndSubs.size() >= 2 && !TextUtils.isEmpty(iccId)) {
             if (iccId.startsWith(slotAndSubs.get(0).iccId)) {
-                icc = 1;
+                icc = 0;
             } else if (iccId.startsWith(slotAndSubs.get(1).iccId)) {
-                icc = 2;
+                icc = 1;
             } else {
                 if (iccId.equals(slotAndSubs.get(0).subId)) {
-                    icc = 1;
+                    icc = 0;
                 } else if (iccId.equals(slotAndSubs.get(1).subId)) {
-                    icc = 2;
+                    icc = 1;
                 } else {
                     icc = 0;
                 }

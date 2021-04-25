@@ -33,7 +33,6 @@ import java.nio.charset.StandardCharsets;
 public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver messageReceiver;
 
-
     private MySocketThread myThread;
 
     private static class MySocketThread extends Thread {
@@ -143,8 +142,11 @@ public class MainActivity extends AppCompatActivity {
                             String sendId = bundle.getString("sendId");
                             String content = bundle.getString("content");
                             int slotId = bundle.getInt("slotId");
-                            String receiveKey = slotId == 0 ? "phone" : "subPhone";
-                            String receiveId = sharedPreferences.getString(receiveKey, "");
+                            String receiveId = bundle.getString("receiveId");
+                            if (receiveId.isEmpty()) {
+                                String receiveKey = slotId == 0 ? "phone" : "subPhone";
+                                receiveId = sharedPreferences.getString(receiveKey, "");
+                            }
                             boolean flag = keys.equals("");
                             if (!flag) {
                                 String[] temp = keys.split(",");
