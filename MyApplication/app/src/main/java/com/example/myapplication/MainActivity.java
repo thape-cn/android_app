@@ -1,18 +1,18 @@
 package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -29,11 +29,24 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver messageReceiver;
+    private final String[] phoneNumbers = {"", ""};
 
     private MySocketThread myThread;
+
+    private boolean isWorked(String className) {
+        ActivityManager myManager = (ActivityManager) MainActivity.this.getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+        ArrayList<ActivityManager.RunningServiceInfo> runningService = (ArrayList<ActivityManager.RunningServiceInfo>) myManager.getRunningServices(30);
+        for (int i = 0; i < runningService.size(); i++) {
+            if (runningService.get(i).service.getClassName().toString().equals(className)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private static class MySocketThread extends Thread {
 
@@ -97,18 +110,40 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        final SharedPreferences sharedPreferences = this.getSharedPreferences("settings", Context.MODE_PRIVATE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //Toast.makeText(MainActivity.this, "applying permission", Toast.LENGTH_LONG).show();
+        if (!SimUtil.IsHasPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE)) {
+            SimUtil.requestOnePermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE, 1);
+        }
+        if (!SimUtil.IsHasPermission(MainActivity.this, Manifest.permission.RECEIVE_SMS)) {
+            SimUtil.requestOnePermission(MainActivity.this, Manifest.permission.RECEIVE_SMS, 1);
+            if (!SimUtil.IsHasPermission(MainActivity.this, Manifest.permission.READ_SMS)) {
+                SimUtil.requestOnePermission(MainActivity.this, Manifest.permission.READ_SMS, 1);
+            }
+        }
+        boolean isDoubleSim = SimUtil.isDoubleSim(MainActivity.this);
+        if (isDoubleSim) {
+            phoneNumbers[0] = SimUtil.getSlotIdInfo(MainActivity.this, 0).number;
+            phoneNumbers[1] = SimUtil.getSlotIdInfo(MainActivity.this, 1).number;
+        } else {
+            phoneNumbers[0] = SimUtil.getSlotIdInfo(MainActivity.this, 0).number;
+            if (TextUtils.isEmpty(phoneNumbers[0])) {
+                phoneNumbers[0] = SimUtil.getSlotIdInfo(MainActivity.this, 1).number;
+            }
+        }
+        final SharedPreferences sharedPreferences = this.getSharedPreferences("settings", Context.MODE_PRIVATE);
         final EditText matchKeys = (EditText) findViewById(R.id.matchKeys);
         final EditText phone = (EditText) findViewById(R.id.phone);
         final EditText subPhone = (EditText) findViewById(R.id.subPhone);
         final EditText serverUrl = (EditText) findViewById(R.id.serverUrl);
-        matchKeys.setText(sharedPreferences.getString("matchKeys", ""));
-        phone.setText(sharedPreferences.getString("phone", ""));
-        subPhone.setText(sharedPreferences.getString("subPhone", ""));
-        serverUrl.setText(sharedPreferences.getString("serverUrl", ""));
         Switch listenOnOff = (Switch) findViewById(R.id.listenOnOff);
+        matchKeys.setText(sharedPreferences.getString("matchKeys", ""));
+        String phoneText = sharedPreferences.getString("phone", phoneNumbers[0]);
+        if (!TextUtils.isEmpty(phoneText)) phone.setText(phoneText);
+        String subPhoneText = sharedPreferences.getString("subPhone", phoneNumbers[1]);
+        if (!TextUtils.isEmpty(subPhoneText)) subPhone.setText(sharedPreferences.getString("subPhone", phoneNumbers[1]));
+        serverUrl.setText(sharedPreferences.getString("serverUrl", "https://cybros.thape.com.cn/api/received_sms_message.json"));
         listenOnOff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -123,16 +158,6 @@ public class MainActivity extends AppCompatActivity {
                     editor.putString("subPhone", subPhone.getText().toString());
                     editor.putString("serverUrl", serverUrl.getText().toString());
                     editor.apply();
-                    //Toast.makeText(MainActivity.this, "applying permission", Toast.LENGTH_LONG).show();
-
-                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
-                        //Toast.makeText(MainActivity.this, "Permission must be granted to get sms", Toast.LENGTH_LONG).show();
-                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.RECEIVE_SMS}, 1);
-                        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-                            //Toast.makeText(MainActivity.this, "Permission must be granted to get sms", Toast.LENGTH_LONG).show();
-                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_SMS}, 1);
-                        }
-                    }
                     messageReceiver = new BroadcastReceiver() {
                         @Override
                         public void onReceive(Context context, Intent intent) {
@@ -179,5 +204,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+      if(keyCode==KeyEvent.KEYCODE_BACK){
+        moveTaskToBack(false);
+        return true;
+      }
+      return super.onKeyDown(keyCode, event);
     }
 }

@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
 
