@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.text.TextUtils;
-import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
 
@@ -54,7 +53,7 @@ public class SimUtil {
         SubscriptionInfo subInfo = manager.getActiveSubscriptionInfoForSimSlotIndex(slotId);
         if (subInfo != null) {
             slotInfo.carrierName = subInfo.getCarrierName().toString();
-            slotInfo.number = subInfo.getNumber().toString();
+            slotInfo.number = subInfo.getNumber();
         }
         return slotInfo;
     }
@@ -76,11 +75,11 @@ public class SimUtil {
 
 
     //判断是否拥有该权限
-    public static boolean IsHasPermission(Context mContext, String permission) {
+    public static boolean isHasPermission(Context mContext, String permission) {
         if (mContext != null) {
-            return ActivityCompat.checkSelfPermission(mContext, permission) == PackageManager.PERMISSION_GRANTED;
+            return ActivityCompat.checkSelfPermission(mContext, permission) != PackageManager.PERMISSION_GRANTED;
         } else {
-            return false;
+            return true;
         }
     }
 

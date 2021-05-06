@@ -113,12 +113,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Toast.makeText(MainActivity.this, "applying permission", Toast.LENGTH_LONG).show();
-        if (!SimUtil.IsHasPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE)) {
+        if (SimUtil.isHasPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE)) {
             SimUtil.requestOnePermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE, 1);
         }
-        if (!SimUtil.IsHasPermission(MainActivity.this, Manifest.permission.RECEIVE_SMS)) {
+        if (SimUtil.isHasPermission(MainActivity.this, Manifest.permission.RECEIVE_SMS)) {
             SimUtil.requestOnePermission(MainActivity.this, Manifest.permission.RECEIVE_SMS, 1);
-            if (!SimUtil.IsHasPermission(MainActivity.this, Manifest.permission.READ_SMS)) {
+            if (SimUtil.isHasPermission(MainActivity.this, Manifest.permission.READ_SMS)) {
                 SimUtil.requestOnePermission(MainActivity.this, Manifest.permission.READ_SMS, 1);
             }
         }
@@ -168,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
                             String content = bundle.getString("content");
                             int slotId = bundle.getInt("slotId");
                             String receiveId = bundle.getString("receiveId");
-                            if (receiveId.isEmpty()) {
+                            if (TextUtils.isEmpty(receiveId)) {
                                 String receiveKey = slotId == 0 ? "phone" : "subPhone";
                                 receiveId = sharedPreferences.getString(receiveKey, "");
                             }
