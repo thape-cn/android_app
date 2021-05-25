@@ -37,7 +37,6 @@ public class SimUtil {
 
     //通过卡槽id获取sim卡的信息0代码卡槽1，1代表卡槽2
     public static SlotInfo getSlotIdInfo(Context mContext, int slotId) {
-        String info = "";
         SlotInfo slotInfo = new SlotInfo();
         SubscriptionManager manager = SubscriptionManager.from(mContext);
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -63,7 +62,7 @@ public class SimUtil {
         try {
             if (isDoubleSim(mContext)) {
                 List<ModelSlotAndSub> slotAndSubs = getModelSlot(mContext);
-                return slotAndSubs != null && slotAndSubs.size() == 2;
+                return slotAndSubs.size() == 2;
             } else {
                 return false;
             }
@@ -97,16 +96,12 @@ public class SimUtil {
         int icc = 0;
         if (slotAndSubs != null && slotAndSubs.size() >= 2 && !TextUtils.isEmpty(iccId)) {
             if (iccId.startsWith(slotAndSubs.get(0).iccId)) {
-                icc = 0;
             } else if (iccId.startsWith(slotAndSubs.get(1).iccId)) {
                 icc = 1;
             } else {
                 if (iccId.equals(slotAndSubs.get(0).subId)) {
-                    icc = 0;
                 } else if (iccId.equals(slotAndSubs.get(1).subId)) {
                     icc = 1;
-                } else {
-                    icc = 0;
                 }
             }
         }
@@ -127,7 +122,7 @@ public class SimUtil {
     //获取对应的卡槽ID和iccID 关联
     private static List<ModelSlotAndSub> getModelSlot(Context mContext) {
         List<ModelSlotAndSub> data = new ArrayList<>();
-        ModelSlotAndSub modelSlotAndSub = null;
+        ModelSlotAndSub modelSlotAndSub;
         SubscriptionManager subscriptionManager = SubscriptionManager.from(mContext);
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.READ_PHONE_STATE)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -149,7 +144,7 @@ public class SimUtil {
                     }
                 }
                 //qb2019/07/02修改将卡1和卡2的位置旋转过来，如果第一个simSlot大于第二个的话
-                if (data != null && data.size() == 2) {
+                if (data.size() == 2) {
                     if (!TextUtils.isEmpty(data.get(0).simSlot) && !TextUtils.isEmpty(data.get(1).simSlot)) {
                         int simSlot1 = Integer.parseInt(data.get(0).simSlot);
                         int simSlot2 = Integer.parseInt(data.get(1).simSlot);

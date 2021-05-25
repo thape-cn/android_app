@@ -13,8 +13,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import static android.app.Activity.RESULT_OK;
-
 public class MyReceiver extends BroadcastReceiver {
     private static final String SMS_RECEIVED_ACTION = "android.provider.Telephony.SMS_RECEIVED";
 
@@ -32,10 +30,11 @@ public class MyReceiver extends BroadcastReceiver {
                 int slotId = SimUtil.getSlot(context, String.valueOf(subId));
                 SlotInfo slotInfo = SimUtil.getSlotIdInfo(context, slotId);
                 //解析短信
+                String format = intent.getStringExtra("format");
                 SmsMessage[] msg = new SmsMessage[pdusData.length];
                 for (int i = 0; i < msg.length; i++) {
                     byte[] pdus = (byte[]) pdusData[i];
-                    msg[i] = SmsMessage.createFromPdu(pdus);
+                    msg[i] = SmsMessage.createFromPdu(pdus, format);
                 }
                 StringBuilder content = new StringBuilder(); //获取短信内容
                 StringBuilder phoneNumber = new StringBuilder(); //获取地址
@@ -64,13 +63,13 @@ public class MyReceiver extends BroadcastReceiver {
 
     }
 
-    public String smsToString(Context context, String sendid, String content) {
+    public String smsToString(Context context, String sendId, String content) {
         String res = "";
         JSONObject object = new JSONObject();
         try {
             JSONArray jsonArray = new JSONArray();
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("sendId", sendid);
+            jsonObject.put("sendId", sendId);
             jsonObject.put("content", content);
             jsonArray.put(jsonObject);
             object.put("sms", jsonArray);
