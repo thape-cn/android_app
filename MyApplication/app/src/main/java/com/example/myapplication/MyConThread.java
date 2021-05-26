@@ -1,6 +1,5 @@
 package com.example.myapplication;
 
-import android.os.CountDownTimer;
 import android.util.Log;
 
 import java.io.IOException;
@@ -31,28 +30,4 @@ class MyConThread extends Thread {
             e.printStackTrace();
         }
     }
-}
-
-
-public class TimeCountDown extends CountDownTimer {
-	private final String url;
-
-	public TimeCountDown(long millisInFuture, long countDownInterval, String url) {
-		super(millisInFuture, countDownInterval);
-		// TODO Auto-generated constructor stub
-		this.url = url;
-	}
-
-	@Override
-	public void onTick(long millisUntilFinished) {
-		// TODO Auto-generated method stub
-        MyConThread thread = new MyConThread(this.url);
-        thread.start();
-	}
-
-	@Override
-	public void onFinish() {
-		// TODO Auto-generated method stub
-        this.start();
-	}
 }

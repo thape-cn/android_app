@@ -28,6 +28,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver messageReceiver;
@@ -35,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
     private MySocketThread myThread;
 
-    private TimeCountDown timeCountDown;
+    private Timer timer;
 
     private boolean isWorked(String className) {
         ActivityManager myManager = (ActivityManager) MainActivity.this.getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
@@ -68,13 +70,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
-//                this.socket = new Socket("127.0.0.1", 10000);       //change to you own server IP address
-//                this.socket.setSoTimeout(10000);
-//                OutputStream os = this.socket.getOutputStream();
-//                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, "utf-8"));
-//                bw.write(value);
-//                bw.flush();
-//                this.socket.close();
                 URL url = new URL(this.url);
                 this.connection = (HttpURLConnection) url.openConnection();
                 //设置请求方法
@@ -94,15 +89,9 @@ public class MainActivity extends AppCompatActivity {
                 bw.close();
                 int responseCode = this.connection.getResponseCode();
                 Log.d("code", "result===" + responseCode);
-//                if(responseCode == HttpURLConnection.HTTP_OK){
-//                InputStream inputStream = this.connection.getInputStream();
-//                    String result = is2String(inputStream);//将流转换为字符串。
-//                Log.d("karl", "result=============" + inputStream.toString());
-//                }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             } finally {
-//                this.socket.close();
                 this.connection.disconnect();
             }
         }
@@ -166,8 +155,14 @@ public class MainActivity extends AppCompatActivity {
                     receiveIdList.add(subPhoneStr);
                 }
                 String receiveIds = TextUtils.join(",", receiveIdList);
-                timeCountDown = new TimeCountDown(1000 * 60 * 60, 1000 * 60 * 5, serverUrlStr + "?receiveIds=" + receiveIds);
-                timeCountDown.start();
+                timer = new Timer(true);
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        MyConThread thread = new MyConThread(serverUrlStr + "?receiveIds=" + receiveIds);
+                        thread.start();
+                    }
+                }, 0, 1000 * 60 * 5);
                 messageReceiver = new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
@@ -190,10 +185,6 @@ public class MainActivity extends AppCompatActivity {
                                 if (flag) break;
                             }
                         }
-                        //Toast.makeText(context, value, Toast.LENGTH_LONG).show();
-                        //Intent intentTmp = new Intent(MainActivity.this, SocketActivity.class);
-                        //intentTmp.putExtra("extra_data", value);
-                        //startActivity(intentTmp);
                         Log.d("flag", String.valueOf(flag));
                         if (flag) {
                             myThread = new MySocketThread(url, receiveId, sendId, content);
@@ -204,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
                 registerReceiver(messageReceiver, new IntentFilter("CLOSE_ACTION"));
                 Toast.makeText(MainActivity.this, "功能开启", Toast.LENGTH_LONG).show();
             } else {
-                timeCountDown.cancel();
+                timer.cancel();
                 unregisterReceiver(messageReceiver);
                 //Do something
                 matchKeys.setFocusableInTouchMode(true);
