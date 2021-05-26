@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-class MyConThread extends Thread {
+public class MyConThread extends Thread {
     private final String url;
 
     public MyConThread(String url) {

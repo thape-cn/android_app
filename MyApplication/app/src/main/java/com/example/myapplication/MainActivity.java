@@ -1,7 +1,6 @@
 package com.example.myapplication;
 
 import android.Manifest;
-import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,85 +16,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
+    private BroadcastReceiver conReceiver;
     private BroadcastReceiver messageReceiver;
     private final String[] phoneNumbers = {"", ""};
-
-    private MySocketThread myThread;
-
-    private Timer timer;
-
-    private boolean isWorked(String className) {
-        ActivityManager myManager = (ActivityManager) MainActivity.this.getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-        ArrayList<ActivityManager.RunningServiceInfo> runningService = (ArrayList<ActivityManager.RunningServiceInfo>) myManager.getRunningServices(30);
-        for (int i = 0; i < runningService.size(); i++) {
-            if (runningService.get(i).service.getClassName().equals(className)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static class MySocketThread extends Thread {
-
-        private final String url;
-        private final String receiveId;
-        private final String sendId;
-        private final String content;
-
-        // private Socket socket;
-        private HttpURLConnection connection;
-
-        public MySocketThread(String url, String receiveId, String sendId, String content) {
-            this.url = url;
-            this.receiveId = receiveId;
-            this.sendId = sendId;
-            this.content = content;
-        }
-
-        @Override
-        public void run() {
-            try {
-                URL url = new URL(this.url);
-                this.connection = (HttpURLConnection) url.openConnection();
-                //设置请求方法
-                this.connection.setRequestMethod("POST");
-                this.connection.setDoOutput(true);
-                this.connection.setDoInput(true);
-                this.connection.setUseCaches(false);
-                this.connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
-                this.connection.connect();
-                OutputStream os = this.connection.getOutputStream();
-                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
-                JSONObject body = new JSONObject();
-                body.put("receiveId", this.receiveId);
-                body.put("sendId", this.sendId);
-                body.put("content", this.content);
-                bw.write(body.toString());
-                bw.close();
-                int responseCode = this.connection.getResponseCode();
-                Log.d("code", "result===" + responseCode);
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-            } finally {
-                this.connection.disconnect();
-            }
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -155,14 +81,18 @@ public class MainActivity extends AppCompatActivity {
                     receiveIdList.add(subPhoneStr);
                 }
                 String receiveIds = TextUtils.join(",", receiveIdList);
-                timer = new Timer(true);
-                timer.schedule(new TimerTask() {
+                String url = serverUrlStr + "?receiveIds=" + receiveIds;
+                conReceiver = new BroadcastReceiver() {
                     @Override
-                    public void run() {
-                        MyConThread thread = new MyConThread(serverUrlStr + "?receiveIds=" + receiveIds);
-                        thread.start();
+                    public void onReceive(Context context, Intent intent) {
+                        if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) {
+                            MyConThread conThread = new MyConThread(url);
+                            conThread.start();
+                        }
                     }
-                }, 0, 1000 * 60 * 5);
+                };
+                registerReceiver(conReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
+
                 messageReceiver = new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
@@ -187,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         Log.d("flag", String.valueOf(flag));
                         if (flag) {
-                            myThread = new MySocketThread(url, receiveId, sendId, content);
+                            MySocketThread myThread = new MySocketThread(url, receiveId, sendId, content);
                             myThread.start();
                         }
                     }
@@ -195,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
                 registerReceiver(messageReceiver, new IntentFilter("CLOSE_ACTION"));
                 Toast.makeText(MainActivity.this, "功能开启", Toast.LENGTH_LONG).show();
             } else {
-                timer.cancel();
+                unregisterReceiver(conReceiver);
                 unregisterReceiver(messageReceiver);
                 //Do something
                 matchKeys.setFocusableInTouchMode(true);
