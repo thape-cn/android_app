@@ -27,6 +27,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!isTaskRoot()) {
+            finish();
+            return;
+        }
         setContentView(R.layout.activity_main);
         //Toast.makeText(MainActivity.this, "applying permission", Toast.LENGTH_LONG).show();
         if (SimUtil.isHasPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE)) {
