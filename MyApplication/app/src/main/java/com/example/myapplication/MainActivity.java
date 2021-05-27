@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -86,7 +87,10 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onReceive(Context context, Intent intent) {
                         if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) {
-                            MyConThread conThread = new MyConThread(url);
+                            BatteryManager batterymanager = (BatteryManager) getSystemService(BATTERY_SERVICE);
+                            int battery = batterymanager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+                            boolean isCharging = batterymanager.isCharging();
+                            MyConThread conThread = new MyConThread(url + "&battery=" + battery + "&is_charging=" + isCharging);
                             conThread.start();
                         }
                     }
